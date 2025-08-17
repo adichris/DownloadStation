@@ -33,6 +33,7 @@ A modern, feature-rich video and audio downloader built with PyQt6 and yt-dlp. D
 ### Prerequisites
 - Python 3.8 or higher
 - Windows 10/11 (primary platform)
+- FFmpeg [Download](https://ffmpeg.org/download.html)
 
 ### From Source
 
