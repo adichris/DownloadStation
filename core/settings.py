@@ -10,8 +10,11 @@ class SettingsManager:
     
     def __init__(self):
         self.settings_file = pathlib.Path.cwd() / "settings.json"
+        path_ = os.path.join(os.path.expanduser('~'), 'Downloads', "DownloadStation")
+        if not os.path.exists(path_):
+            path_ = os.mkdir(path_)
         self.default_settings = {
-            "download_path": os.path.join(os.path.expanduser('~'), 'Downloads'),
+            "download_path":path_,
             "audio_only": False,
             "single_video_only": True,
             "quality": "720p",

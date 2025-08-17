@@ -1,6 +1,6 @@
+import glob
 import pathlib
 import subprocess
-import sys
 import os
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                             QHBoxLayout, QPushButton, QLabel, 
@@ -42,7 +42,7 @@ def show_ffmpeg_warning():
 
 
 class DownloadStation(QMainWindow):
-    """Simple DownloadStation main window"""
+    """main window"""
     
     def __init__(self):
         super().__init__()
@@ -88,6 +88,7 @@ class DownloadStation(QMainWindow):
         header_layout.addWidget(title)
         
         header_layout.addStretch()
+        
         
         # Info button
         self.info_button = QPushButton("ℹ️ Info")
@@ -219,7 +220,12 @@ class DownloadStation(QMainWindow):
         # Download path
         options_grid.addWidget(QLabel("Save to:"))
         self.path_input = QLineEdit()
-        self.path_input.setText(self.settings_manager.get("download_path", os.path.join(os.path.expanduser('~'), 'Downloads')))
+        
+        default_path = os.path.join(os.path.expanduser('~'), 'Downloads', "DownloadStation")
+        if not os.path.exists(default_path):
+            default_path = os.mkdir(default_path)
+            
+        self.path_input.setText(self.settings_manager.get("download_path", default_path))
         self.path_input.setReadOnly(True)
         options_grid.addWidget(self.path_input)
         
@@ -638,21 +644,32 @@ class DownloadStation(QMainWindow):
             # Look for incomplete download files (.part, .tmp, etc.)
             download_path = self.path_input.text()
             
-            if os.path.exists(download_path):
-                for file in pathlib.Path(download_path).glob("*.part"):
+            cleanup_patterns = [
+                "*.part",
+                "*.ytdl",
+                "*.temp",
+                "*.part-Frag*",
+                "*.f*.mp4.part*",
+                "*.f*.mp4.ytdl"
+            ]
+
+            cleaned_files = []
+
+            for pattern in cleanup_patterns:
+                pattern_path = os.path.join(download_path, "**", pattern)
+                files = glob.glob(pattern_path, recursive=True)
+
+                for file_path in files:
                     try:
-                        file.unlink()
-                    except:
-                        pass
+                        os.remove(file_path)
+                        cleaned_files.append(os.path.basename(file_path))
+                        self.status_label.setText(f"🗑️  Removed: {os.path.basename(file_path)}")
                         
-                for file in pathlib.Path(download_path).glob("*.tmp"):
-                    try:
-                        file.unlink()
-                    except:
-                        pass
+                    except Exception as e:
+                        self.status_label.setText(f"❌ Failed to remove {file_path}: {e}")
                         
         except Exception as e:
-            print(f"Temp file cleanup error: {e}")
+            self.status_label.setText(f"Temp file cleanup error: {e}")
     
     def cancel_all_active_downloads(self):
         """Cancel all downloads with user confirmation"""

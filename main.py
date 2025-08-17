@@ -6,7 +6,6 @@ from ui.main_window import DownloadStation, check_ffmpeg, show_ffmpeg_warning
 from PyQt6.QtGui import QIcon
 
 
-
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     BASE_DIR = pathlib.Path(__file__).resolve().parent
