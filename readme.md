@@ -26,7 +26,18 @@ A modern, feature-rich video and audio downloader built with PyQt6 and yt-dlp. D
 
 ## Screenshots
 
-*(Add screenshots of your application here)*
+## Screenshots
+
+### Main Interface
+![Main Window](screenshot/image1)
+
+### Download Progress Dark Mode
+![Download Progress](screenshot/image2.png)
+
+### Download Progress Light Mode
+![Playlist Selection](screenshot/image3.png)
+
+![Settings](screenshot/4.png)
 
 ## Installation
 
