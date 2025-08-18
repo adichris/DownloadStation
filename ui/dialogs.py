@@ -1,10 +1,10 @@
-from PyQt6.QtWidgets import (QApplication, QWidget, QVBoxLayout, 
+from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout, 
                             QHBoxLayout, QPushButton, QLabel, 
                             QCheckBox, QLineEdit, QProgressBar,
                             QMessageBox, QFrame, QDialog, QScrollArea,
                             QTableWidget, QTableWidgetItem, QHeaderView,
                             QAbstractItemView)
-from PyQt6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt, QTimer
 import datetime
 from core.playlist_loader import PlaylistInfoThread
 
@@ -525,7 +525,7 @@ class InfoDialog(QDialog):
         email_input = QLineEdit("adichriz@gmail.com")
         email_input.setReadOnly(True)
         email_copy_btn = QPushButton("Copy")
-        email_copy_btn.clicked.connect(lambda: self.copy_to_clipboard("adichriz@gmail.com"))
+        email_copy_btn.clicked.connect(lambda: self.copy_to_clipboard("adichriz@gmail.com", email_copy_btn))
         email_layout.addWidget(email_input)
         email_layout.addWidget(email_copy_btn)
         contact_layout.addLayout(email_layout)
@@ -647,20 +647,25 @@ class InfoDialog(QDialog):
         close_btn = QPushButton("Close")
         close_btn.clicked.connect(self.accept)
         layout.addWidget(close_btn, alignment=Qt.AlignmentFlag.AlignCenter)
-        
-    def copy_to_clipboard(self, text):
-        """Copy text to clipboard"""
+
+    def copy_to_clipboard(self, text, button=None):
         clipboard = QApplication.clipboard()
         clipboard.setText(text)
         
-        # Show temporary feedback
-        sender = self.sender()
-        original_text = sender.text()
-        sender.setText("Copied!")
-        
+        if button is None:
+            button = self.sender()
+    
+        if button:
+            original_text = button.text()
+            button.setText("Copied!")
+            
+            # Reset after 1 second
+            QTimer.singleShot(1000, lambda: self.reset_button(button, original_text))
+        button.setText("Copied!")
+
         # Reset after 1 second
-        QTimer.singleShot(1000, lambda: self.reset_button(sender, original_text))
-        
+        QTimer.singleShot(1000, lambda: self.reset_button(button, original_text))
+
     def reset_button(self, button, original_text):
         """Reset button appearance"""
         button.setText(original_text)
@@ -700,7 +705,7 @@ class DonateDialog(QDialog):
         mtn_number = QLineEdit("0599784780")
         mtn_number.setReadOnly(True)
         mtn_copy_btn = QPushButton("Copy")
-        mtn_copy_btn.clicked.connect(lambda: self.copy_to_clipboard("0599784780"))
+        mtn_copy_btn.clicked.connect(lambda: self.copy_to_clipboard("0599784780", mtn_copy_btn))
         mtn_layout.addWidget(mtn_number)
         mtn_layout.addWidget(mtn_copy_btn)
         donate_layout.addLayout(mtn_layout)
@@ -711,7 +716,7 @@ class DonateDialog(QDialog):
         telecel_number = QLineEdit("0502961714")
         telecel_number.setReadOnly(True)
         telecel_copy_btn = QPushButton("Copy")
-        telecel_copy_btn.clicked.connect(lambda: self.copy_to_clipboard("0502961714"))
+        telecel_copy_btn.clicked.connect(lambda: self.copy_to_clipboard("0502961714", telecel_copy_btn))
         telecel_layout.addWidget(telecel_number)
         telecel_layout.addWidget(telecel_copy_btn)
         donate_layout.addLayout(telecel_layout)
@@ -722,7 +727,7 @@ class DonateDialog(QDialog):
         mail_address = QLineEdit("adichriz@gmail.com")
         mail_address.setReadOnly(True)
         mail_copy_btn = QPushButton("Copy")
-        mail_copy_btn.clicked.connect(lambda: self.copy_to_clipboard("adichriz@gmail.com"))
+        mail_copy_btn.clicked.connect(lambda: self.copy_to_clipboard("adichriz@gmail.com", mail_copy_btn))
         mail_layout.addWidget(mail_address)
         mail_layout.addWidget(mail_copy_btn)
         donate_layout.addLayout(mail_layout)
@@ -739,19 +744,23 @@ class DonateDialog(QDialog):
         close_btn = QPushButton("Close")
         close_btn.clicked.connect(self.accept)
         layout.addWidget(close_btn, alignment=Qt.AlignmentFlag.AlignCenter)
-        
-    def copy_to_clipboard(self, text):
+
+    def copy_to_clipboard(self, text, button=None, **kwargs):
         """Copy text to clipboard"""
         clipboard = QApplication.clipboard()
         clipboard.setText(text)
         
         # Show temporary feedback
-        sender = self.sender()
-        original_text = sender.text()
-        sender.setText("Copied!")
+        if button is None:
+            button = self.sender()
         
-        # Reset after 1 second
-        QTimer.singleShot(1000, lambda: self.reset_button(sender, original_text))
+        if button:
+            original_text = button.text()
+            button.setText("Copied!")
+            
+            # Reset after 1 second
+            QTimer.singleShot(1000, lambda: self.reset_button(button, original_text))
+
         
     def reset_button(self, button, original_text):
         """Reset button appearance"""

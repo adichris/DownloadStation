@@ -1,17 +1,17 @@
 import pathlib
 import os
-from PyQt6.QtCore import QThread, pyqtSignal
+from PySide6.QtCore import Qt, QThread, Signal
 import yt_dlp
 import datetime
 
 
 class PlaylistInfoThread(QThread):
     """Thread for loading playlist information"""
-    
-    info_loaded = pyqtSignal(dict)
-    loading_failed = pyqtSignal(str)
-    progress_updated = pyqtSignal(int, int, str)  # total_items, loaded_items, current_title
-    
+
+    info_loaded = Signal(dict)
+    loading_failed = Signal(str)
+    progress_updated = Signal(int, int, str)  # total_items, loaded_items, current_title
+
     def __init__(self, url):
         super().__init__()
         self.url = url
@@ -29,7 +29,6 @@ class PlaylistInfoThread(QThread):
         self.start_time = datetime.datetime.now()
         
         try:
-            # First pass: Get playlist structure with flat extraction
             ydl_opts = {
                 'quiet': True,
                 'no_warnings': True,
@@ -37,8 +36,21 @@ class PlaylistInfoThread(QThread):
                 'ignoreerrors': True,
                 'no_check_certificate': True,
                 'extractor_retries': 2,
+                'noplaylist': False,  # This is crucial - ensure playlist extraction
+                'yes_playlist': True,
+                "format": "bestaudio/best",
             }
             
+                    # For URLs with both video and playlist, force playlist extraction
+            if 'list=' in self.url:
+                # Extract just the playlist part
+                import re
+                playlist_match = re.search(r'list=([^&]+)', self.url)
+                if playlist_match:
+                    playlist_id = playlist_match.group(1)
+                    playlist_url = f"https://www.youtube.com/playlist?list={playlist_id}"
+                    self.url = playlist_url
+
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 if self.is_cancelled:
                     return
@@ -61,8 +73,9 @@ class PlaylistInfoThread(QThread):
                     for i, entry in enumerate(entries):
                         if self.is_cancelled:
                             return
-                            
-                        if entry is not None and entry.get('id'):
+                        
+              
+                        if entry is not None:
                             # Create a complete entry with the information we have
                             enhanced_entry = {
                                 'id': entry.get('id'),

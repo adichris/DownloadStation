@@ -1,7 +1,6 @@
-
 import pathlib
 import os
-from PyQt6.QtCore import QThread, pyqtSignal
+from PySide6.QtCore import Qt, QThread, Signal
 import yt_dlp
 import datetime
 import sys
@@ -17,15 +16,14 @@ def get_resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 
-    
-    
+
 class DownloadThread(QThread):
     """Simple download thread"""
     
-    progress_updated = pyqtSignal(int, str, str, str)  # progress, speed, file_size, eta
-    download_completed = pyqtSignal(str, str)     # filename, file_path
-    download_failed = pyqtSignal(str)        # error message
-    retry_status = pyqtSignal(int, int, str)
+    progress_updated = Signal(int, str, str, str)  # progress, speed, file_size, eta
+    download_completed = Signal(str, str)     # filename, file_path
+    download_failed = Signal(str)        # error message
+    retry_status = Signal(int, int, str)
     
     def __init__(self, url, output_path, is_audio_only=False, quality="720p", no_playlist=True, playlist_entries=None):
         super().__init__()
@@ -50,6 +48,7 @@ class DownloadThread(QThread):
         
     def run(self):
         """Run the download"""
+        
         for attempt in range(self.max_retries + 1):
             if self.is_cancelled:
                 return
@@ -75,6 +74,7 @@ class DownloadThread(QThread):
                     'extractor_retries': 3,
                     'file_access_retries': 3,
                     'socket_timeout': 30,
+                    "format": "bestvideo+bestaudio/best",
                 }
                 if self.is_audio_only:
                     ydl_opts['format'] = 'bestaudio/best'
@@ -86,15 +86,15 @@ class DownloadThread(QThread):
                     
                 else:
                     if self.quality == "Best":
-                        ydl_opts['format'] = 'best[ext=mp4]/best'
+                        ydl_opts['format'] = 'bestvideo+bestaudio/best'
                     elif self.quality == "1080p":
-                        ydl_opts['format'] = 'best[height<=1080][ext=mp4]/best[height<=1080]/best[ext=mp4]/best'
+                        ydl_opts['format'] = 'best[height<=1080][vcodec*=vp9]/best[height<=1080][ext=mp4]/best[height<=1080]/best'
                     elif self.quality == "720p":
-                        ydl_opts['format'] = 'best[height<=720][ext=mp4]/best[height<=720]/best[ext=mp4]/best'
+                        ydl_opts['format'] = 'best[height<=720][vcodec*=vp9]/best[height<=720][ext=mp4]/best[height<=720]/best'
                     elif self.quality == "480p":
-                        ydl_opts['format'] = 'best[height<=480][ext=mp4]/best[height<=480]/best[ext=mp4]/best'
+                        ydl_opts['format'] = 'best[height<=480][vcodec*=vp9]/best[height<=480][ext=mp4]/best[height<=480]/best'
                     else:
-                        ydl_opts['format'] = 'best[ext=mp4]/best'
+                        ydl_opts['format'] = 'best'
                         
                 ffmpeg_path = get_resource_path("ffmpeg.exe")
                 if os.path.exists(ffmpeg_path):
@@ -108,20 +108,28 @@ class DownloadThread(QThread):
                     
                 # Handle playlist entries or single URL
                     if self.playlist_entries:
-                        # Download selected playlist entries
                         for entry in self.playlist_entries:
                             if self.is_cancelled:
                                 break
                             
-                            # Use the prepared URL from playlist loading
                             video_url = entry.get('url') or entry.get('webpage_url')
                             
                             if video_url:
                                 try:
-                                    # Create individual ydl options for each video to ensure quality is applied
                                     individual_opts = ydl_opts.copy()
-                                    individual_opts['noplaylist'] = True  # Ensure no playlist processing
+                                    individual_opts['noplaylist'] = True
                                     
+                                    # Explicitly ensure quality format is set
+                                    if not self.is_audio_only:
+                                        if self.quality == "Best":
+                                            individual_opts['format'] = 'bestvideo+bestaudio/best'
+                                        elif self.quality == "1080p":
+                                            individual_opts['format'] = 'best[height<=1080]/best'
+                                        elif self.quality == "720p":
+                                            individual_opts['format'] = 'best[height<=720]/best'
+                                        elif self.quality == "480p":
+                                            individual_opts['format'] = 'best[height<=480]/best'
+
                                     with yt_dlp.YoutubeDL(individual_opts) as individual_ydl:
                                         individual_ydl.download([video_url])
                                 except Exception as e:

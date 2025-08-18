@@ -1,9 +1,9 @@
 import pathlib
 import sys
 import os
-from PyQt6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication
 from ui.main_window import DownloadStation, check_ffmpeg, show_ffmpeg_warning
-from PyQt6.QtGui import QIcon
+from PySide6.QtGui import QIcon
 
 
 if __name__ == '__main__':

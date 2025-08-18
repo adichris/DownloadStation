@@ -3,12 +3,12 @@ import glob
 import pathlib
 import subprocess
 import os
-from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
+from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                             QHBoxLayout, QPushButton, QLabel, 
                             QComboBox, QCheckBox, QLineEdit, QFileDialog,
                             QListWidget, QListWidgetItem,
                             QMessageBox, QFrame, QDialog)
-from PyQt6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt, QTimer
 from plyer import notification
 from .widgets import CustomTextEdit, DownloadItem
 from .dialogs import HistoryDialog, InfoDialog, DonateDialog, PlaylistLoadingDialog, PlaylistSelectionDialog

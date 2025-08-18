@@ -1,6 +1,5 @@
 import pathlib
 import os
-from plyer import notification
 import datetime
 import json
 

@@ -1,11 +1,11 @@
 import pathlib
 import sys
 import os
-from PyQt6.QtWidgets import (QApplication, QWidget, QVBoxLayout, 
+from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout, 
                             QHBoxLayout, QTextEdit, QPushButton, QLabel, 
                             QProgressBar, QMessageBox, QMenu)
-from PyQt6.QtCore import Qt, pyqtSignal, QTimer
-from PyQt6.QtGui import QKeySequence, QShortcut
+from PySide6.QtCore import Qt, Signal, QTimer
+from PySide6.QtGui import QKeySequence, QShortcut
 import subprocess
 import platform
 
@@ -45,10 +45,10 @@ class CustomTextEdit(QTextEdit):
 
 class DownloadItem(QWidget):
     """Widget for individual download item"""
-    
-    cancel_requested = pyqtSignal()
-    retry_requested = pyqtSignal()
-    
+
+    cancel_requested = Signal()
+    retry_requested = Signal()
+
     def __init__(self, url, is_audio, is_playlist=False):
         super().__init__()
         self.url = url
