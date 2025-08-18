@@ -1,3 +1,4 @@
+from datetime import datetime
 import glob
 import pathlib
 import subprocess
@@ -459,19 +460,33 @@ class DownloadStation(QMainWindow):
         self.downloads_list.addItem(item)
         self.downloads_list.setItemWidget(item, item_widget)
         
+        # Start download
+        self.start_download_thread(item_widget, item, url, path, is_audio, quality, no_playlist, playlist_entries)
+
+    def start_download_thread(self, item_widget, list_item, url, path, is_audio, quality, no_playlist, playlist_entries):
+        """Start or restart download thread"""
         # Create and start download thread
         thread = DownloadThread(url, path, is_audio, quality, no_playlist, playlist_entries)
         thread.progress_updated.connect(item_widget.update_progress)
         thread.download_completed.connect(lambda filename, filepath: self.on_download_completed(item_widget, filename, filepath))
         thread.download_failed.connect(lambda error: self.on_download_failed(item_widget, error))
+        thread.retry_status.connect(lambda attempt, max_attempts, error: self.on_retry_status(item_widget, attempt, max_attempts, error))
         
-        # Connect cancel signal to remove item
-        item_widget.cancel_requested.connect(lambda: self.cancel_download(item_widget, thread, item))
+        # Connect retry signal
+        item_widget.retry_requested.connect(lambda: self.start_download_thread(item_widget, list_item, url, path, is_audio, quality, no_playlist, playlist_entries))
+        
+        # Connect cancel signal
+        item_widget.cancel_requested.connect(lambda: self.cancel_download(item_widget, thread, list_item))
         
         self.download_threads.append(thread)
         thread.start()
-        
-        self.downloads_count += 1
+
+    def on_retry_status(self, item_widget, attempt, max_attempts, error):
+        """Handle retry status updates"""
+        item_widget.status_label.setText(f"🔄 Attempt {attempt}/{max_attempts}: {error}")
+        # Update progress bar to show retry progress
+        retry_progress = int((attempt - 1) / max_attempts * 100)
+        item_widget.progress_bar.setValue(retry_progress)
         
     def add_playlist_download(self, url, path, is_audio, quality, selected_entries):
         """Add a playlist download with selected entries"""
@@ -619,7 +634,11 @@ class DownloadStation(QMainWindow):
             self.settings_manager.save_settings()
             
         except Exception as e:
-            print(f"Cleanup error: {e}")
+            pass
+            # write to a file
+            log_path = os.path.join(pathlib.Path.cwd(), "logs")
+            with open(os.path.join(log_path, "cleanup_errors.log"), "a") as f:
+                f.write(f"{datetime.now()} - Cleanup error: {e}\n")
 
     def cleanup_logs(self):
         """Clean up old log entries"""
@@ -636,7 +655,9 @@ class DownloadStation(QMainWindow):
                         f.writelines(lines[-100:])
                         
             except Exception as e:
-                print(f"Log cleanup error: {e}")
+                log_path = os.path.join(pathlib.Path.cwd(), "logs")
+                with open(os.path.join(log_path, "cleanup_errors.log"), "a") as f:
+                    f.write(f"{datetime.now()} - Log cleanup error: {e}\n")
 
     def cleanup_temp_files(self):
         """Clean up temporary download files"""

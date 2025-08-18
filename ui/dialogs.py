@@ -1,6 +1,3 @@
-import pathlib
-import sys
-import os
 from PyQt6.QtWidgets import (QApplication, QWidget, QVBoxLayout, 
                             QHBoxLayout, QPushButton, QLabel, 
                             QCheckBox, QLineEdit, QProgressBar,
@@ -354,8 +351,6 @@ class PlaylistLoadingDialog(QDialog):
         """Handle playlist loading failure"""
         QMessageBox.critical(self, "Loading Failed", f"Failed to load playlist:\n{error}")
         self.reject()
-
-
 
 
 

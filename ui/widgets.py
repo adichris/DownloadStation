@@ -47,6 +47,7 @@ class DownloadItem(QWidget):
     """Widget for individual download item"""
     
     cancel_requested = pyqtSignal()
+    retry_requested = pyqtSignal()
     
     def __init__(self, url, is_audio, is_playlist=False):
         super().__init__()
@@ -57,6 +58,7 @@ class DownloadItem(QWidget):
         self.failed = False
         self.cancelled = False
         self.file_path = None
+        self.can_retry = False
         
         self.init_ui()
         self.setup_context_menu()
@@ -158,15 +160,27 @@ class DownloadItem(QWidget):
         else:
             type_label = QLabel("🎵 Audio" if self.is_audio else "🎬 Video")
         
+         # Button container
+        button_layout = QHBoxLayout()
+        
         self.cancel_button = QPushButton("❌")
         self.cancel_button.setMaximumSize(25, 25)
         self.cancel_button.setToolTip("Cancel download")
         self.cancel_button.clicked.connect(self.on_cancel_clicked)
         
+        self.retry_button = QPushButton("🔄")
+        self.retry_button.setMaximumSize(25, 25)
+        self.retry_button.setToolTip("Retry download")
+        self.retry_button.clicked.connect(self.on_retry_clicked)
+        self.retry_button.hide()  # Hidden initially
+        
+        button_layout.addWidget(self.retry_button)
+        button_layout.addWidget(self.cancel_button)
+        
         top_layout.addWidget(self.url_label)
         top_layout.addWidget(type_label)
         top_layout.addStretch()
-        top_layout.addWidget(self.cancel_button)
+        top_layout.addLayout(button_layout)
         
         layout.addLayout(top_layout)
         
@@ -216,13 +230,26 @@ class DownloadItem(QWidget):
                 }
             """)
             self.setCursor(Qt.CursorShape.PointingHandCursor)
+    
+    def on_retry_clicked(self):
+        """Handle retry button click"""
+        self.failed = False
+        self.can_retry = False
+        self.retry_button.hide()
+        self.cancel_button.show()
+        self.progress_bar.setValue(0)
+        self.status_label.setText("Retrying...")
+        self.retry_requested.emit()
+        
         
     def set_failed(self, error):
-        """Set download as failed"""
+        """Set download as failed with retry option"""
         if not self.cancelled:
             self.failed = True
+            self.can_retry = True
             self.status_label.setText(f"❌ Failed: {error}")
             self.cancel_button.hide()
+            self.retry_button.show()
         
     def is_completed(self):
         """Check if download is completed or failed"""
